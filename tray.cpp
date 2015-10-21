@@ -11,7 +11,7 @@
 Tray::Tray(QObject *parent) : QObject(parent)
 {
     // Create Icon object
-    QIcon icon ("D:\\tmp\\icon.png");
+    QIcon icon (":/img/tray_pic.png");
     _icon = new QSystemTrayIcon(icon, this);
     _icon->setToolTip("Volume control");
     _icon->setVisible(true);
@@ -27,7 +27,7 @@ Tray::Tray(QObject *parent) : QObject(parent)
     _iconMenu->addSeparator();
     _iconMenu->addAction("Settings", this, SLOT(showSettingsWindow()));
     _iconMenu->addSeparator();
-    _iconMenu->addAction("&About", this, SLOT(showAboutWindow()));
+    //_iconMenu->addAction("&About", this, SLOT(showAboutWindow()));
     _iconMenu->addAction("&Quit", QApplication::instance(), SLOT(quit()), QKeySequence::Quit );
     connect(_iconMenu, SIGNAL(aboutToShow()), this, SLOT(updateStatus()));
 }

@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/img">
+        <file>VolumeControl.ico</file>
+        <file>tray_pic.png</file>
+    </qresource>
+</RCC>
