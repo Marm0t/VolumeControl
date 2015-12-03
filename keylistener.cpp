@@ -65,6 +65,10 @@ void KeyListener::stop()
         {
             DBG("Key Listener stopped ");
             UnregisterHotKey(NULL, 1);
+            for (map<UINT, KeyCallback_t>::iterator aIter = _keyHandlers.begin(); aIter != _keyHandlers.end(); ++aIter)
+            {
+                UnregisterHotKey(NULL, aIter->first);
+            }
             _threadID = 0;
         }
     }

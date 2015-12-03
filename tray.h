@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QSystemTrayIcon>
 #include "settings.h"
+#include "keylistener.h"
 
 
 class QSystemTrayIcon;
@@ -16,12 +17,15 @@ public:
     explicit Tray(QObject *parent = 0);
 
 private:
-    void showMenu();
 
     QSystemTrayIcon* _icon;
     QMenu* _iconMenu;
     QAction* _statusAction;
     Settings* _settingsDialog;
+
+    KeyListener _keyLstnr;
+
+
 
 signals:
 
@@ -32,8 +36,13 @@ private slots:
     void iconClicked(QSystemTrayIcon::ActivationReason iReason);
     void msgClicked();
 
+    void showMenu();
+    void finishMenu(QObject*);
+
     void showAboutWindow();
+
     void showSettingsWindow();
+    void finishSettingsWindow(QObject* );
 
     void changeVolume(double val);
 
