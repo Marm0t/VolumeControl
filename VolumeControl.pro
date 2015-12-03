@@ -11,7 +11,8 @@ SOURCES += \
     volumechanger.cpp\
     tray.cpp    \
     main.cpp \
-    keylistener.cpp
+    keylistener.cpp \
+    settings.cpp
 
 
 HEADERS += \
@@ -19,10 +20,15 @@ HEADERS += \
     volumechanger.h \
     tray.h \
     runnable.h \
-    keylistener.h
+    keylistener.h \
+    settings.h
 
 
 RESOURCES = resources.qrc \
     resources.qrc
 
 RC_ICONS = VolumeControl.ico
+
+FORMS += \
+    settings.ui
+

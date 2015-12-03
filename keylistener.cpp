@@ -84,7 +84,8 @@ DWORD KeyListener::run()
         ERR("Error while trying to register keys");
         return 1;
     }
-    MSG msg = {0};
+    MSG msg = {0, 0, 0, 0, 0, 0, 0};
+
     while ( (GetMessage(&msg, NULL, 0, 0) != 0) )
     {
         if (msg.message == WM_HOTKEY)
@@ -98,7 +99,7 @@ DWORD KeyListener::run()
             }
             catch (const std::exception& e)
             {
-                ERR("Unknown hotkeys received. Implementatino error. Key: 0x" <<hex<<uppercase<<key << ", control key: 0x" << hex<<uppercase<<ctrlKey);
+                ERR("Unknown hotkeys received. Implementation error. Key: 0x" <<hex<<key << ", control key: 0x" << hex<<ctrlKey);
                 ERR("Exception details: " << e.what());
             }
         }

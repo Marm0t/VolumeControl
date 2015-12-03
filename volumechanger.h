@@ -14,15 +14,14 @@ public:
     bool setMute (bool iMute);
     bool isMute() const;
 
-protected:
-    void init();
-    void unInit();
-
 private:
     VolumeChanger();
     ~VolumeChanger();
     VolumeChanger(const VolumeChanger&);
     VolumeChanger& operator=(const VolumeChanger&);
+
+    void init();
+    void unInit();
 
     bool _initialized;
     IAudioEndpointVolume * _endpointVolume; // = NULL

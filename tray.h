@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QSystemTrayIcon>
+#include "settings.h"
 
 
 class QSystemTrayIcon;
@@ -15,9 +16,12 @@ public:
     explicit Tray(QObject *parent = 0);
 
 private:
+    void showMenu();
+
     QSystemTrayIcon* _icon;
     QMenu* _iconMenu;
     QAction* _statusAction;
+    Settings* _settingsDialog;
 
 signals:
 
@@ -30,6 +34,8 @@ private slots:
 
     void showAboutWindow();
     void showSettingsWindow();
+
+    void changeVolume(double val);
 
 };
 

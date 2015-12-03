@@ -23,13 +23,6 @@ VolumeChanger::~VolumeChanger()
 }
 
 
-VolumeChanger& VolumeChanger::Instance()
-{
-    static VolumeChanger singleton;
-    return singleton;
-}
-
-
 void VolumeChanger::init()
 {
     if (!_initialized)
@@ -40,10 +33,25 @@ void VolumeChanger::init()
         CoInitialize(NULL);
         //TODO: add error handling
         HRESULT hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&deviceEnumerator);
+        if (hr != S_OK)
+        {
+            ERR("CoCreateInstance error: " << hr);
+            return;
+        }
         hr = deviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &defaultDevice);
+        if (hr != S_OK)
+        {
+            ERR("Cannot GetDefaultAudioEndpoint: " << hr);
+            return;
+        }
         deviceEnumerator->Release();
         deviceEnumerator = NULL;
         hr = defaultDevice->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_INPROC_SERVER, NULL, (LPVOID *)&_endpointVolume);
+        if (hr != S_OK)
+        {
+            ERR("Cannot activate default device: " << hr);
+            return;
+        }
         defaultDevice->Release();
         defaultDevice = NULL;
         _initialized = true;
@@ -56,6 +64,16 @@ void VolumeChanger::unInit()
     CoUninitialize();
     _initialized = false;
 }
+
+
+// Public methods
+
+VolumeChanger& VolumeChanger::Instance()
+{
+    static VolumeChanger singleton;
+    return singleton;
+}
+
 
 bool VolumeChanger::setVolume(double iVol)
 {
@@ -70,6 +88,7 @@ bool VolumeChanger::setVolume(double iVol)
     }
     return true;
 }
+
 
 double VolumeChanger::getVolume() const
 {
@@ -96,6 +115,8 @@ bool VolumeChanger::setMute (bool iMute)
    }
    return true;
 }
+
+
 bool VolumeChanger::isMute() const
 {
     BOOL mute = true;

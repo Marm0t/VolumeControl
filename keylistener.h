@@ -13,12 +13,12 @@ public:
     KeyListener():_threadID(0){}
 
     void addKey(UINT iKey, KeyCallback_t callback); // adding [alt+shift+iKey] combination
-    void removeKey(UINT iKey); // removing hotkey from configuratio
+    void removeKey(UINT iKey); // removing hotkey from configuration
 
     void start(); // starts keys handler in separated thread
     void stop();  // stops keys handler thread
 
-    const bool isRunning() const {return _threadID?true:false;}
+    bool isRunning() const {return _threadID?true:false;}
 
 private:
     HANDLE newthread();

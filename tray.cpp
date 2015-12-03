@@ -7,7 +7,6 @@
 #include "logging.h"
 #include "volumechanger.h"
 
-
 Tray::Tray(QObject *parent) : QObject(parent)
 {
     // Create Icon object
@@ -16,8 +15,8 @@ Tray::Tray(QObject *parent) : QObject(parent)
     _icon->setToolTip("Volume control");
     _icon->setVisible(true);
 
-    //connect(_icon, SIGNAL(messageClicked()), this, SLOT(msgClicked()));
-    connect(_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(iconClicked(QSystemTrayIcon::ActivationReason)));
+    connect(_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
+             this, SLOT(iconClicked(QSystemTrayIcon::ActivationReason)));
 
     // Create Icon Menu for right-click
     _iconMenu = new QMenu(0);
@@ -32,20 +31,22 @@ Tray::Tray(QObject *parent) : QObject(parent)
     connect(_iconMenu, SIGNAL(aboutToShow()), this, SLOT(updateStatus()));
 }
 
+void Tray::showMenu()
+{
+    _iconMenu->exec(QCursor::pos());
+}
 
 void Tray::iconClicked(QSystemTrayIcon::ActivationReason iReason)
 {
     switch(iReason)
     {
     case QSystemTrayIcon::Trigger:        // single left click
-        //_icon->showMessage("Volume controle", "Current volume: ");
+        //_icon->showMessage("Volume control", "Current volume: " + QString::number(VolumeChanger::Instance().getVolume()));
         DBG("Icon clicked with left button" );
-
         break;
 
     case QSystemTrayIcon::Context:        // right click
-        // show menu
-        _iconMenu->exec(QCursor::pos());
+        showMenu();
         break;
 
     case QSystemTrayIcon::DoubleClick:    // double click
@@ -79,11 +80,12 @@ void Tray::showAboutWindow()
 
 void Tray::showSettingsWindow()
 {
-    QMessageBox::about(0, "Volume Control", "Settings will be here!\n\n"
-                                            "Now you can enjoy hardcoded hotkeys:\n\n"
-                                            "\t<Alt>+<Shift>+<=> - increase the volume\t\n"
-                                            "\t<Alt>+<Shift>+<-> - decrease the volume\t\n"
-                                            "\t<Alt>+<Shift>+<0> - mute/unmute\t\n");
+    if(!_settingsDialog)
+    {
+        _settingsDialog = new Settings();
+        connect(_settingsDialog, SIGNAL(volumeChanged(double)), this, SLOT(changeVolume(double)));
+    }
+    _settingsDialog->show();
 }
 
 
@@ -93,4 +95,9 @@ void Tray::updateStatus()
     _statusAction->setText(QString("Volume: %1%%2").arg(VolumeChanger::Instance().getVolume()*100).arg(mute));
 }
 
+
+void Tray::changeVolume(double val)
+{
+    VolumeChanger::Instance().setVolume(val);
+}
 
