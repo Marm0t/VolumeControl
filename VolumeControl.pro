@@ -32,3 +32,4 @@ RC_ICONS = VolumeControl.ico
 FORMS += \
     settings.ui
 
+CONFIG += c++11

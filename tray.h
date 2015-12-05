@@ -1,7 +1,6 @@
 #ifndef TRAY_H
 #define TRAY_H
 
-#include <QWidget>
 #include <QSystemTrayIcon>
 #include "settings.h"
 #include "keylistener.h"
@@ -15,6 +14,7 @@ class Tray : public QObject
     Q_OBJECT
 public:
     explicit Tray(QObject *parent = 0);
+    ~Tray();
 
 private:
 
@@ -24,6 +24,7 @@ private:
     Settings* _settingsDialog;
 
     KeyListener _keyLstnr;
+    SettingsConfig_t _config;
 
 
 
@@ -45,6 +46,7 @@ private slots:
     void finishSettingsWindow(QObject* );
 
     void changeVolume(double val);
+    void changeConfig(SettingsConfig_t val);
 
 };
 

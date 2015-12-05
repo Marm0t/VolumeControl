@@ -12,19 +12,19 @@
 inline double round(double x) { return (floor(x + 0.5)); }
 
 void muteCb()
-{//case 0x30: // 0 - MUTE
+{
     VolumeChanger::Instance().setMute(!VolumeChanger::Instance().isMute());
     DBG( (VolumeChanger::Instance().isMute()? "Mute" : "Unmute") );
 }
 
 void minusCb()
-{// case VK_OEM_MINUS:
+{
     double vol = round(VolumeChanger::Instance().getVolume() * 100) / 100;
     if (vol >0) VolumeChanger::Instance().setVolume(vol-0.01);
     DBG("Volume decreased. New volume is " << VolumeChanger::Instance().getVolume());
 }
 void plusCb()
-{// case VK_OEM_PLUS:
+{
     double vol = round(VolumeChanger::Instance().getVolume() * 100) / 100;
     if (vol <1) VolumeChanger::Instance().setVolume(vol+0.01);
     DBG("Volume increased. New volume is " << VolumeChanger::Instance().getVolume());
@@ -32,7 +32,7 @@ void plusCb()
 
 
 Tray::Tray(QObject *parent)
-: QObject(parent), _iconMenu(NULL), _settingsDialog(NULL)
+    : QObject(parent), _iconMenu(NULL), _settingsDialog(NULL), _config(Settings::DEFAULT_CFG)
 {
     // Create Icon object
     QIcon icon (":/img/tray_pic.png");
@@ -45,10 +45,16 @@ Tray::Tray(QObject *parent)
 
 
     // setup of key listener
-    _keyLstnr.addKey(VK_0,         muteCb );
-    _keyLstnr.addKey(VK_OEM_PLUS,  plusCb );
-    _keyLstnr.addKey(VK_OEM_MINUS, minusCb);
+    _keyLstnr.addKey( _config.mute.nativeVirtualKey(), _config.mute.nativeModifiers(), muteCb );
+    _keyLstnr.addKey( _config.volDown.nativeVirtualKey(), _config.volDown.nativeModifiers(), minusCb);
+    _keyLstnr.addKey( _config.volUp.nativeVirtualKey(), _config.volUp.nativeModifiers(), plusCb );
+
     _keyLstnr.start(); // starts new thread
+}
+
+Tray::~Tray()
+{
+    _icon->setVisible(false);
 }
 
 
@@ -127,10 +133,11 @@ void Tray::showSettingsWindow()
 {
     if(!_settingsDialog)
     {
-        _settingsDialog = new Settings();
+        _settingsDialog = new Settings(NULL, _config);
         _settingsDialog->setAttribute( Qt::WA_DeleteOnClose );
         connect(_settingsDialog, SIGNAL(volumeChanged(double)), this, SLOT(changeVolume(double)));
         connect(_settingsDialog, SIGNAL(destroyed(QObject*)), this, SLOT(finishSettingsWindow(QObject*)));
+        connect(_settingsDialog, SIGNAL(configChanged(SettingsConfig_t)), this, SLOT(changeConfig(SettingsConfig_t)));
     }
     _settingsDialog->show();
 }
@@ -156,5 +163,23 @@ void Tray::changeVolume(double val)
 }
 
 
+void Tray::changeConfig(SettingsConfig_t val)
+{
+    _config = val;
+    _keyLstnr.stop();
+    _keyLstnr.clear();
+    _keyLstnr.addKey( _config.mute.nativeVirtualKey(), _config.mute.nativeModifiers(), muteCb );
+    _keyLstnr.addKey( _config.volDown.nativeVirtualKey(), _config.volDown.nativeModifiers(), minusCb);
+    _keyLstnr.addKey( _config.volUp.nativeVirtualKey(), _config.volUp.nativeModifiers(), plusCb );
+    _keyLstnr.start();
+
+    if (!_keyLstnr.isRunning())
+    {
+        QMessageBox msgbox(QMessageBox::Warning, "Error", "It seems your hotkeys combination cannot be taken\n"
+                                                          "Please choose another hotkey combination",
+                           QMessageBox::Ok);
+        msgbox.exec();
+    }
+}
 
 

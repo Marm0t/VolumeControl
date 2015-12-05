@@ -2,6 +2,14 @@
 #include "logging.h"
 using namespace std;
 
+bool KeyListener::CheckHotKey(UINT iKey, UINT iModifiers)
+{
+    bool aRes = RegisterHotKey(NULL, 0xFA, iModifiers , iKey);
+    if (aRes) UnregisterHotKey(NULL, 0xFA);
+    return aRes;
+}
+
+
 HANDLE KeyListener::newthread()
 {
     return CreateThread(NULL, 0, &Runnable::run_thread, this, 0, NULL);
@@ -11,12 +19,18 @@ HANDLE KeyListener::newthread()
 void KeyListener::addKey(UINT iKey, KeyCallback_t iCallback)
 // adding [alt+shift+iKey] combination
 {
+    addKey(iKey, (MOD_ALT | MOD_SHIFT), iCallback );
+}
+
+
+void KeyListener::addKey(UINT iKey, UINT iModifiers, KeyCallback_t iCallback)
+{
     if (isRunning())
     {
         INFO("Cannot add new key when key listener is running!");
         return;
     }
-    if (_keyHandlers.insert(pair<UINT, KeyCallback_t>(iKey, iCallback)).second == false)
+    if (_keyHandlers.insert(pair< pair<UINT, UINT>, KeyCallback_t>( {iKey, iModifiers&0xFF}, iCallback)).second == false)
     {
         INFO("The Key " << iKey << " is already added. You need to remove it first");
         return;
@@ -26,12 +40,22 @@ void KeyListener::addKey(UINT iKey, KeyCallback_t iCallback)
 
 void KeyListener::removeKey(UINT iKey)
 {
+    removeKey(iKey, (MOD_ALT | MOD_SHIFT));
+}
+
+void KeyListener::removeKey(UINT iKey, UINT iModifiers)
+{
     if (isRunning())
     {
         INFO("Cannot remove key when key listener is running!");
         return;
     }
-    _keyHandlers.erase(iKey);
+    _keyHandlers.erase({iKey, iModifiers });
+}
+
+void KeyListener::clear()
+{
+    _keyHandlers.clear();
 }
 
 
@@ -65,10 +89,6 @@ void KeyListener::stop()
         {
             DBG("Key Listener stopped ");
             UnregisterHotKey(NULL, 1);
-            for (map<UINT, KeyCallback_t>::iterator aIter = _keyHandlers.begin(); aIter != _keyHandlers.end(); ++aIter)
-            {
-                UnregisterHotKey(NULL, aIter->first);
-            }
             _threadID = 0;
         }
     }
@@ -78,9 +98,9 @@ void KeyListener::stop()
 DWORD KeyListener::run()
 {
     BOOL res = true;
-    for (map<UINT, KeyCallback_t>::iterator aIter = _keyHandlers.begin(); aIter != _keyHandlers.end(); ++aIter)
+    for (map<pair<UINT,UINT>, KeyCallback_t>::iterator aIter = _keyHandlers.begin(); aIter != _keyHandlers.end(); ++aIter)
     {
-        res = RegisterHotKey(NULL, 1, MOD_ALT | MOD_SHIFT , aIter->first); // register hotkeys from the map
+        res = RegisterHotKey(NULL, 1, aIter->first.second , aIter->first.first); // register hotkeys from the map
     }
 
     if (!res)
@@ -94,12 +114,14 @@ DWORD KeyListener::run()
     {
         if (msg.message == WM_HOTKEY)
         {
-            LPARAM key = (msg.lParam >> 16) & 0xFFFF;
             LPARAM ctrlKey = msg.lParam & 0xFFFF;
+            LPARAM key = (msg.lParam >> 16) & 0xFFFF;
+            DBG("ctrlKey: " << ctrlKey << " key: " << key);
+
             //cout << "WM_HOTKEY received. key pressed: 0x" <<hex<<uppercase<<key << ", control key: 0x" << hex<<uppercase<<ctrlKey << endl;
             try
             {
-                _keyHandlers.at(key)();
+                _keyHandlers.at({key, ctrlKey})();
             }
             catch (const std::exception& e)
             {
