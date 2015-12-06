@@ -3,11 +3,14 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QCursor>
+#include <QStandardPaths>
+#include <QDir>
 #include "tray.h"
 #include "logging.h"
 #include "volumechanger.h"
 #include <math.h>
 #define VK_0 0x30
+#define CFG_FILENAME QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("vol_ctrl.cfg")
 
 inline double round(double x) { return (floor(x + 0.5)); }
 
@@ -42,6 +45,10 @@ Tray::Tray(QObject *parent)
 
     connect(_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
              this, SLOT(iconClicked(QSystemTrayIcon::ActivationReason)));
+
+    DBG("Config file: " << CFG_FILENAME);
+    if (!_config.loadFromFile(CFG_FILENAME))
+        _config = Settings::DEFAULT_CFG;
 
 
     // setup of key listener
@@ -177,6 +184,13 @@ void Tray::changeConfig(SettingsConfig_t val)
     {
         QMessageBox msgbox(QMessageBox::Warning, "Error", "It seems your hotkeys combination cannot be taken\n"
                                                           "Please choose another hotkey combination",
+                           QMessageBox::Ok);
+        msgbox.exec();
+    }
+    if (!_config.saveToFile(CFG_FILENAME))
+    {
+        QMessageBox msgbox(QMessageBox::Warning, "Error", "Cannot save your config to file\n"
+                                                          "Make sure you have enough space and your filesystem is not read-only",
                            QMessageBox::Ok);
         msgbox.exec();
     }

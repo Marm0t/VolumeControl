@@ -91,7 +91,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>30</y>
+     <y>20</y>
      <width>113</width>
      <height>20</height>
     </rect>
@@ -101,7 +101,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>30</y>
+     <y>20</y>
      <width>90</width>
      <height>20</height>
     </rect>
@@ -114,7 +114,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>90</y>
+     <y>80</y>
      <width>90</width>
      <height>20</height>
     </rect>
@@ -127,7 +127,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>90</y>
+     <y>80</y>
      <width>113</width>
      <height>20</height>
     </rect>
@@ -137,7 +137,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>60</y>
+     <y>50</y>
      <width>90</width>
      <height>20</height>
     </rect>
@@ -150,7 +150,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>60</y>
+     <y>50</y>
      <width>113</width>
      <height>20</height>
     </rect>
@@ -167,6 +167,19 @@
    </property>
    <property name="text">
     <string>_volLevelLabel</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="_autorunCheckBox">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>110</y>
+     <width>200</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Automatically start with Windows</string>
    </property>
   </widget>
  </widget>

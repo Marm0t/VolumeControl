@@ -4,19 +4,27 @@
 #include <QDialog>
 #include <QKeySequenceEdit>
 #include <QKeyEvent>
+#include <QDataStream>
 
 namespace Ui {
 class Settings;
 }
 
 
-typedef struct
+typedef struct SettingsConfig
 {
     QKeyEvent mute;
     QKeyEvent volDown;
     QKeyEvent volUp;
 
+    bool isCorrect();
+    bool saveToFile(const QString& filename);
+    bool loadFromFile(const QString& filename);
+
 } SettingsConfig_t;
+
+QDataStream &operator<<(QDataStream &out, const SettingsConfig_t &settingsConfig);
+QDataStream &operator>>(QDataStream &in, SettingsConfig_t &settingsConfig);
 
 class Settings : public QDialog
 {
@@ -29,6 +37,8 @@ public:
     const SettingsConfig_t& getConfig(){return _config;}
 
     static SettingsConfig_t DEFAULT_CFG;
+    static void setAutoRun(bool autorun);
+    static bool isAutoRun();
 
 private:
     Ui::Settings *ui;
@@ -38,10 +48,8 @@ signals:
     void volumeChanged(double value);
     void configChanged(SettingsConfig_t value);
 
-
 private slots:
     void slt_sliderValueChanged(int value);
-
     void slt_muteChanged(QKeyEvent event);
     void slt_volDownChanged(QKeyEvent event);
     void slt_volUpChanged(QKeyEvent event);
