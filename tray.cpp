@@ -46,17 +46,6 @@ Tray::Tray(QObject *parent)
     connect(_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
              this, SLOT(iconClicked(QSystemTrayIcon::ActivationReason)));
 
-    if (!QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).exists())
-    {
-        if (!QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)))
-        {
-            QMessageBox msgbox(QMessageBox::Warning, "Error", "Cannot create config dir\n"
-                                                              "Make sure you have enough space and your filesystem is not read-only",
-                               QMessageBox::Ok);
-            msgbox.exec();
-        }
-    }
-
     DBG("Config file: " << CFG_FILENAME);
     if (!_config.loadFromFile(CFG_FILENAME))
         _config = Settings::DEFAULT_CFG;
@@ -197,6 +186,16 @@ void Tray::changeConfig(SettingsConfig_t val)
                                                           "Please choose another hotkey combination",
                            QMessageBox::Ok);
         msgbox.exec();
+    }
+    if (!QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).exists())
+    {
+        if (!QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)))
+        {
+            QMessageBox msgbox(QMessageBox::Warning, "Error", "Cannot create config dir\n"
+                                                              "Make sure you have enough space and your filesystem is not read-only",
+                               QMessageBox::Ok);
+            msgbox.exec();
+        }
     }
     if (!_config.saveToFile(CFG_FILENAME))
     {
