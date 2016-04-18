@@ -3,12 +3,20 @@
 
 #include <QSystemTrayIcon>
 #include "settings.h"
+#include "about.h"
 #include "keylistener.h"
 
 
 class QSystemTrayIcon;
 class QMenu;
 
+
+/**
+ * @brief The Tray class.
+ *        Works as "main loop" of the application and also represents tray icon.
+ *        Responcible for KeyListener execution, configuration updates deployment,
+ *        interaction with user.
+ */
 class Tray : public QObject
 {
     Q_OBJECT
@@ -22,11 +30,10 @@ private:
     QMenu* _iconMenu;
     QAction* _statusAction;
     Settings* _settingsDialog;
+    About* _aboutDialog;
 
     KeyListener _keyLstnr;
     SettingsConfig_t _config;
-
-
 
 signals:
 
@@ -41,6 +48,7 @@ private slots:
     void finishMenu(QObject*);
 
     void showAboutWindow();
+    void finishAboutWindow(QObject* );
 
     void showSettingsWindow();
     void finishSettingsWindow(QObject* );

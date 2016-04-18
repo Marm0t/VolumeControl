@@ -1,5 +1,7 @@
 TEMPLATE = app
 TARGET = VolumeControl
+VERSION = 0.2.0 # major.minor.patch
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 QT = core gui
 
@@ -12,8 +14,8 @@ SOURCES += \
     tray.cpp    \
     main.cpp \
     keylistener.cpp \
-    settings.cpp
-
+    settings.cpp \
+    about.cpp
 
 HEADERS += \
     logging.h \
@@ -21,8 +23,8 @@ HEADERS += \
     tray.h \
     runnable.h \
     keylistener.h \
-    settings.h
-
+    settings.h \
+    about.h
 
 RESOURCES = resources.qrc \
     resources.qrc
@@ -30,6 +32,7 @@ RESOURCES = resources.qrc \
 RC_ICONS = VolumeControl.ico
 
 FORMS += \
-    settings.ui
+    settings.ui \
+    about.ui
 
 CONFIG += c++11

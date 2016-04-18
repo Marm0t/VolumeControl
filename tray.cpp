@@ -35,7 +35,7 @@ void plusCb()
 
 
 Tray::Tray(QObject *parent)
-    : QObject(parent), _iconMenu(NULL), _settingsDialog(NULL), _config(Settings::DEFAULT_CFG)
+    : QObject(parent), _iconMenu(NULL), _settingsDialog(NULL), _aboutDialog(NULL), _config(Settings::DEFAULT_CFG)
 {
     // Create Icon object
     QIcon icon (":/img/tray_pic.png");
@@ -56,7 +56,8 @@ Tray::Tray(QObject *parent)
     _keyLstnr.addKey( _config.volDown.nativeVirtualKey(), _config.volDown.nativeModifiers(), minusCb);
     _keyLstnr.addKey( _config.volUp.nativeVirtualKey(), _config.volUp.nativeModifiers(), plusCb );
 
-    _keyLstnr.start(); // starts new thread
+    // start key listener in separated thread
+    _keyLstnr.start();
 }
 
 Tray::~Tray()
@@ -109,7 +110,7 @@ void Tray::showMenu()
         _iconMenu->addSeparator();
         _iconMenu->addAction("Settings", this, SLOT(showSettingsWindow()));
         _iconMenu->addSeparator();
-        //_iconMenu->addAction("&About", this, SLOT(showAboutWindow()));
+        _iconMenu->addAction("&About", this, SLOT(showAboutWindow()));
         _iconMenu->addAction("&Quit", QApplication::instance(), SLOT(quit()), QKeySequence::Quit );
         connect(_iconMenu, SIGNAL(aboutToShow()), this, SLOT(updateStatus()));
     }
@@ -128,13 +129,27 @@ void Tray::msgClicked()
     DBG("Message clicked");
 }
 
-
 void Tray::showAboutWindow()
 {
-    QMessageBox::about(0, "About", "Volume Control is a very nice tool.\n"
-                                   "Thanks for using it!\n");
+    //QMessageBox::about(0, "About", "Volume Control is a very nice tool.\n"
+    //                               "Thanks for using it!\n");
+    if(!_aboutDialog)
+    {
+        _aboutDialog = new About(NULL);
+        _aboutDialog->setAttribute( Qt::WA_DeleteOnClose );
+        _aboutDialog->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+        connect(_aboutDialog, SIGNAL(destroyed(QObject*)), this, SLOT(finishAboutWindow(QObject*)));
+    }
+    _aboutDialog->show();
 }
 
+void Tray::finishAboutWindow(QObject*)
+{
+    // All signals are disconnected on delete
+    // no need to "delete" because this slot is called on "destroyed" signal
+    _aboutDialog = NULL;
+    DBG("Finish About");
+}
 
 void Tray::showSettingsWindow()
 {
@@ -154,6 +169,7 @@ void Tray::finishSettingsWindow(QObject*)
     // All signals are disconnected on delete
     // no need to "delete" because this slot is called on "destroyed" signal
     _settingsDialog = NULL;
+    DBG("Finish Settings");
 }
 
 
