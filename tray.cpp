@@ -14,22 +14,32 @@
 
 inline double round(double x) { return (floor(x + 0.5)); }
 
-void muteCb()
+void Tray::muteCb()
 {
-    VolumeChanger::Instance().setMute(!VolumeChanger::Instance().isMute());
+    bool newVal = !VolumeChanger::Instance().isMute();
+    VolumeChanger::Instance().setMute(newVal);
+    emit Instance().muteChanged(newVal);
     DBG( (VolumeChanger::Instance().isMute()? "Mute" : "Unmute") );
 }
 
-void minusCb()
+void Tray::minusCb()
 {
     double vol = round(VolumeChanger::Instance().getVolume() * 100) / 100;
-    if (vol >0) VolumeChanger::Instance().setVolume(vol-0.01);
+    if (vol >0)
+    {
+        VolumeChanger::Instance().setVolume(vol-0.01);
+        emit Instance().volumeChanged(vol);
+    }
     DBG("Volume decreased. New volume is " << VolumeChanger::Instance().getVolume());
 }
-void plusCb()
+void Tray::plusCb()
 {
     double vol = round(VolumeChanger::Instance().getVolume() * 100) / 100;
-    if (vol <1) VolumeChanger::Instance().setVolume(vol+0.01);
+    if (vol <1)
+    {
+        VolumeChanger::Instance().setVolume(vol+0.01);
+        emit Instance().volumeChanged(vol);
+    }
     DBG("Volume increased. New volume is " << VolumeChanger::Instance().getVolume());
 }
 
@@ -52,9 +62,13 @@ Tray::Tray(QObject *parent)
 
 
     // setup of key listener
-    _keyLstnr.addKey( _config.mute.nativeVirtualKey(), _config.mute.nativeModifiers(), muteCb );
-    _keyLstnr.addKey( _config.volDown.nativeVirtualKey(), _config.volDown.nativeModifiers(), minusCb);
-    _keyLstnr.addKey( _config.volUp.nativeVirtualKey(), _config.volUp.nativeModifiers(), plusCb );
+    _keyLstnr.addKey( _config.mute.nativeVirtualKey(), _config.mute.nativeModifiers(), Tray::muteCb );
+    _keyLstnr.addKey( _config.volDown.nativeVirtualKey(), _config.volDown.nativeModifiers(), Tray::minusCb);
+    _keyLstnr.addKey( _config.volUp.nativeVirtualKey(), _config.volUp.nativeModifiers(), Tray::plusCb );
+
+    //setup popup windows slots
+    connect(this, SIGNAL(volumeChanged(double)), this, SLOT(showVolumePopup()));
+    connect(this, SIGNAL(muteChanged(bool)), this, SLOT(showMutePopup()));
 
     // start key listener in separated thread
     _keyLstnr.start();
@@ -63,6 +77,13 @@ Tray::Tray(QObject *parent)
 Tray::~Tray()
 {
     _icon->setVisible(false);
+}
+
+
+Tray& Tray::Instance()
+{
+    static Tray singleton;
+    return singleton;
 }
 
 
@@ -222,4 +243,12 @@ void Tray::changeConfig(SettingsConfig_t val)
     }
 }
 
+void Tray::showVolumePopup()
+{
+    //QMessageBox::information(0, "Volume Changer", "Volume: "+QString::number(VolumeChanger::Instance().getVolume()));
+}
 
+void Tray::showMutePopup()
+{
+    //QMessageBox::information(0, "Volume Changer", (VolumeChanger::Instance().isMute())?"Mute":"UnMute");
+}

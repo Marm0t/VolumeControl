@@ -21,10 +21,11 @@ class Tray : public QObject
 {
     Q_OBJECT
 public:
-    explicit Tray(QObject *parent = 0);
-    ~Tray();
+    static Tray& Instance();
 
 private:
+    explicit Tray(QObject *parent = 0);
+    ~Tray();
 
     QSystemTrayIcon* _icon;
     QMenu* _iconMenu;
@@ -35,7 +36,13 @@ private:
     KeyListener _keyLstnr;
     SettingsConfig_t _config;
 
+    static void muteCb();
+    static void minusCb();
+    static void plusCb();
+
 signals:
+    void volumeChanged(double value);
+    void muteChanged(bool value);
 
 public slots:
     void updateStatus();
@@ -55,6 +62,9 @@ private slots:
 
     void changeVolume(double val);
     void changeConfig(SettingsConfig_t val);
+
+    void showVolumePopup();
+    void showMutePopup();
 
 };
 

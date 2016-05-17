@@ -9,7 +9,7 @@ int main(int argc, char **argv)
     QApplication app (argc, argv);
     app.setQuitOnLastWindowClosed(false);
 
-    Tray tray;
+    Tray::Instance();
 
     int a = app.exec();
     DBG("Process stopped");
