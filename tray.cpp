@@ -9,6 +9,11 @@
 #include "logging.h"
 #include "volumechanger.h"
 #include <math.h>
+#include <QLabel>
+#include <QFont>
+#include <Qtimer>
+#include <QDesktopWidget.h>
+#include <QApplication>
 #define VK_0 0x30
 #define CFG_FILENAME QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("vol_ctrl.cfg")
 
@@ -45,7 +50,8 @@ void Tray::plusCb()
 
 
 Tray::Tray(QObject *parent)
-    : QObject(parent), _iconMenu(NULL), _settingsDialog(NULL), _aboutDialog(NULL), _config(Settings::DEFAULT_CFG)
+    : QObject(parent), _iconMenu(NULL), _settingsDialog(NULL), _aboutDialog(NULL),
+      _popupWidget(NULL), _config(Settings::DEFAULT_CFG)
 {
     // Create Icon object
     QIcon icon (":/img/tray_pic.png");
@@ -72,6 +78,10 @@ Tray::Tray(QObject *parent)
 
     // start key listener in separated thread
     _keyLstnr.start();
+
+    // configure timer for popup messages
+    _popupTimer = new QTimer(this);
+    _popupTimer->setSingleShot(true);
 }
 
 Tray::~Tray()
@@ -158,7 +168,7 @@ void Tray::showAboutWindow()
     {
         _aboutDialog = new About(NULL);
         _aboutDialog->setAttribute( Qt::WA_DeleteOnClose );
-        _aboutDialog->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+        _aboutDialog->setWindowFlags(Qt::Window |  Qt::MSWindowsFixedSizeDialogHint);
         connect(_aboutDialog, SIGNAL(destroyed(QObject*)), this, SLOT(finishAboutWindow(QObject*)));
     }
     _aboutDialog->show();
@@ -245,10 +255,71 @@ void Tray::changeConfig(SettingsConfig_t val)
 
 void Tray::showVolumePopup()
 {
-    //QMessageBox::information(0, "Volume Changer", "Volume: "+QString::number(VolumeChanger::Instance().getVolume()));
+     QString str = "Volume: "+QString::number(VolumeChanger::Instance().getVolume()*100) + "%" ;
+     showMsgPopup(str);
 }
 
 void Tray::showMutePopup()
 {
-    //QMessageBox::information(0, "Volume Changer", (VolumeChanger::Instance().isMute())?"Mute":"UnMute");
+    QString str = (VolumeChanger::Instance().isMute())?"MUTE":"UNMUTE";
+    showMsgPopup(str);
+}
+
+void Tray::showMsgPopup(const QString& iMessage)
+{
+    DBG("MSG received: " + iMessage);
+    QLabel *popupLabel;
+
+    if (_popupWidget != NULL )
+    {
+        DBG("Previous widget is not deleted! Stopping the timer and using it again");
+        _popupTimer->stop();
+        popupLabel = _popupWidget->findChild<QLabel*>("__POPUP_LABEL__");
+        if (!popupLabel){popupLabel = new QLabel(_popupWidget);}
+    }
+    else
+    {
+        _popupWidget = new QWidget();
+        _popupWidget->setWindowFlags(Qt::Tool |
+                          //Qt::CustomizeWindowHint|
+                          Qt::WindowDoesNotAcceptFocus |
+                          Qt::NoDropShadowWindowHint |
+                          Qt::FramelessWindowHint |
+                          Qt::WindowStaysOnTopHint
+                         );
+        _popupWidget->setAttribute(Qt::WA_DeleteOnClose);
+        _popupWidget->setAttribute(Qt::WA_ShowWithoutActivating);
+        _popupWidget->setAttribute(Qt::WA_TranslucentBackground);
+        _popupWidget->setStyleSheet("background:transparent");
+        _popupWidget->setWindowOpacity(0.8);
+        connect(_popupWidget, SIGNAL(destroyed(QObject*)), this, SLOT(finishPopupWidget(QObject*)));
+        popupLabel = new QLabel(_popupWidget);
+        popupLabel->setObjectName("__POPUP_LABEL__");
+        QFont font( "Arial", 24, QFont::Bold);
+        popupLabel->setFont(font);
+        popupLabel->setStyleSheet("QLabel { color : #32CC99; }");
+    }
+
+    popupLabel->setText(iMessage);
+    popupLabel->adjustSize();
+    //Choose position: right bottom corner
+    QRect scr = QApplication::desktop()->availableGeometry();
+    _popupWidget->setGeometry(scr.width()  - popupLabel->geometry().width(),
+                   scr.height() - popupLabel->geometry().height(),
+                   popupLabel->geometry().width(),
+                   popupLabel->geometry().height());
+
+    connect(_popupTimer, SIGNAL(timeout()), _popupWidget, SLOT(close()));
+
+    _popupWidget->show();
+    _popupTimer->start(650);
+}
+
+
+void Tray::finishPopupWidget(QObject*)
+{
+    // All signals are disconnected on delete
+    // no need to "delete" because this slot is called on "destroyed" signal
+    _popupWidget = NULL;
+    DBG("Finish PopupWidget");
 }

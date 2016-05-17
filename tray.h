@@ -32,6 +32,8 @@ private:
     QAction* _statusAction;
     Settings* _settingsDialog;
     About* _aboutDialog;
+    QWidget *_popupWidget;
+    QTimer *_popupTimer;
 
     KeyListener _keyLstnr;
     SettingsConfig_t _config;
@@ -65,6 +67,8 @@ private slots:
 
     void showVolumePopup();
     void showMutePopup();
+    void showMsgPopup(const QString& iMessage);
+    void finishPopupWidget(QObject* );
 
 };
 
