@@ -66,7 +66,6 @@ Tray::Tray(QObject *parent)
     if (!_config.loadFromFile(CFG_FILENAME))
         _config = Settings::DEFAULT_CFG;
 
-
     // setup of key listener
     _keyLstnr.addKey( _config.mute.nativeVirtualKey(), _config.mute.nativeModifiers(), Tray::muteCb );
     _keyLstnr.addKey( _config.volDown.nativeVirtualKey(), _config.volDown.nativeModifiers(), Tray::minusCb);
@@ -188,6 +187,7 @@ void Tray::showSettingsWindow()
     {
         _settingsDialog = new Settings(NULL, _config);
         _settingsDialog->setAttribute( Qt::WA_DeleteOnClose );
+        _settingsDialog->setWindowFlags(Qt::Window |  Qt::MSWindowsFixedSizeDialogHint);
         connect(_settingsDialog, SIGNAL(volumeChanged(double)), this, SLOT(changeVolume(double)));
         connect(_settingsDialog, SIGNAL(destroyed(QObject*)), this, SLOT(finishSettingsWindow(QObject*)));
         connect(_settingsDialog, SIGNAL(configChanged(SettingsConfig_t)), this, SLOT(changeConfig(SettingsConfig_t)));
@@ -214,6 +214,8 @@ void Tray::updateStatus()
 void Tray::changeVolume(double val)
 {
     VolumeChanger::Instance().setVolume(val);
+    // unmute if user changed the volume using slider in settings window
+    if (VolumeChanger::Instance().isMute()){VolumeChanger::Instance().setMute(false);};
 }
 
 
@@ -267,9 +269,9 @@ void Tray::showMutePopup()
 
 void Tray::showMsgPopup(const QString& iMessage)
 {
-    DBG("MSG received: " + iMessage);
-    QLabel *popupLabel;
+    if (!this->_config.showPopup){return;}
 
+    QLabel *popupLabel;
     if (_popupWidget != NULL )
     {
         DBG("Previous widget is not deleted! Stopping the timer and using it again");
@@ -297,7 +299,7 @@ void Tray::showMsgPopup(const QString& iMessage)
         popupLabel->setObjectName("__POPUP_LABEL__");
         QFont font( "Arial", 24, QFont::Bold);
         popupLabel->setFont(font);
-        popupLabel->setStyleSheet("QLabel { color : #32CC99; }");
+        popupLabel->setStyleSheet("QLabel { color : #FEC617; }"); // 32CC99
     }
 
     popupLabel->setText(iMessage);

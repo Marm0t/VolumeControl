@@ -19,6 +19,7 @@ typedef struct SettingsConfig
     QKeyEvent mute;
     QKeyEvent volDown;
     QKeyEvent volUp;
+    bool showPopup;
 
     bool isCorrect();
     bool saveToFile(const QString& filename);

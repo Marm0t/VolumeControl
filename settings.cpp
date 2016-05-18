@@ -11,12 +11,13 @@
 #include <QDir>
 
 #define FILE_HEADER  0x5D6A1F
-#define FILE_VERSION 0x01
+#define FILE_VERSION 0x02
 
 SettingsConfig_t Settings::DEFAULT_CFG = {
     QKeyEvent(QEvent::KeyPress, Qt::Key_0,     Qt::AltModifier|Qt::ShiftModifier, 0,  48, 517),
     QKeyEvent(QEvent::KeyPress, Qt::Key_Minus, Qt::AltModifier|Qt::ShiftModifier, 0, 189, 517),
-    QKeyEvent(QEvent::KeyPress, Qt::Key_Equal, Qt::AltModifier|Qt::ShiftModifier, 0, 187, 517)
+    QKeyEvent(QEvent::KeyPress, Qt::Key_Equal, Qt::AltModifier|Qt::ShiftModifier, 0, 187, 517),
+    true // show popup messages
 };
 
 Settings::Settings(QWidget *parent, SettingsConfig_t& config) :
@@ -27,15 +28,16 @@ Settings::Settings(QWidget *parent, SettingsConfig_t& config) :
     this->setFixedSize(this->sizeHint());
     ui->setupUi(this);
 
-    double aVol = VolumeChanger::Instance().isMute()?0 :VolumeChanger::Instance().getVolume();
+    double aVol = VolumeChanger::Instance().getVolume();
     ui->_volumeSlider->setValue( aVol*100 );
-    ui->_volumeLevelLabel->setText(QString::number(aVol));
+    ui->_volumeLevelLabel->setText(VolumeChanger::Instance().isMute()?"MUTE":QString::number(aVol));
 
     ui->_keyMute->   setKeySequence(QKeySequence(_config.mute.modifiers()|_config.mute.key()));
     ui->_keyVolDown->setKeySequence(QKeySequence(_config.volDown.modifiers()|_config.volDown.key()));
     ui->_keyVolUp->  setKeySequence(QKeySequence(_config.volUp.modifiers()|_config.volUp.key()));
 
     ui->_autorunCheckBox->setChecked(isAutoRun());
+    ui->_showPopupCheckBox->setChecked(this->_config.showPopup);
 
     // internal connections
     connect(ui->_volumeSlider, SIGNAL(valueChanged(int)),     this, SLOT(slt_sliderValueChanged(int)));
@@ -110,6 +112,7 @@ void Settings::accept()
         "\tAutorun    \t"<< ui->_autorunCheckBox->isChecked());
 
     setAutoRun(ui->_autorunCheckBox->isChecked());
+    _config.showPopup = ui->_showPopupCheckBox->isChecked();
 
     emit configChanged(_config);
     QDialog::accept();
@@ -147,6 +150,7 @@ QDataStream &operator<<(QDataStream &out, const SettingsConfig_t &settingsConfig
            settingsConfig.volDown.nativeScanCode() << settingsConfig.volDown.nativeVirtualKey() << settingsConfig.volDown.nativeModifiers();
     out << settingsConfig.volUp.type() << settingsConfig.volUp.key() << settingsConfig.volUp.modifiers() <<
            settingsConfig.volUp.nativeScanCode() << settingsConfig.volUp.nativeVirtualKey() << settingsConfig.volUp.nativeModifiers();
+    out << settingsConfig.showPopup;
     return out;
 }
 
@@ -155,6 +159,7 @@ QDataStream &operator>>(QDataStream &in, SettingsConfig_t &settingsConfig)
     int type;
     int key;
     int modifiers;
+    bool showPopup;
     quint32 nativeScanCode;
     quint32 nativeVirtualKey;
     quint32 nativeModifiers;
@@ -164,7 +169,8 @@ QDataStream &operator>>(QDataStream &in, SettingsConfig_t &settingsConfig)
     QKeyEvent volDown(QEvent::Type(type), key, Qt::KeyboardModifiers(modifiers), nativeScanCode, nativeVirtualKey, nativeModifiers);
     in >> type >> key >> modifiers >> nativeScanCode >> nativeVirtualKey >> nativeModifiers;
     QKeyEvent volUp (QEvent::Type(type), key, Qt::KeyboardModifiers(modifiers), nativeScanCode, nativeVirtualKey, nativeModifiers);
-    settingsConfig = {mute, volDown, volUp};
+    in >> showPopup;
+    settingsConfig = {mute, volDown, volUp, showPopup};
     return in;
 }
 
@@ -208,9 +214,9 @@ bool SettingsConfig::loadFromFile(const QString &filename)
     // Read the version
     qint32 version;
     in >> version;
-    if (version != FILE_VERSION)
+    if (version > FILE_VERSION)
     {
-        ERR("Cannot load config from file " << filename << ": supported file version: " << FILE_VERSION
+        ERR("Cannot load config from file " << filename << ": supported file versions till " << FILE_VERSION
             << ", version in file: " << version);
         return false;
     }
@@ -218,8 +224,20 @@ bool SettingsConfig::loadFromFile(const QString &filename)
 
     // Read the data
     in >> *this;
-
     file.close();
+
+
+    // Backward compatibility
+    if (version == 1)
+    {
+        // From file version 1 to 2
+        this->showPopup = Settings::DEFAULT_CFG.showPopup;
+
+        // Upgrade file version
+        this->saveToFile(filename);
+        DBG("Migrating to newer version of config file. File "<<filename<<" has been overwritten");
+    }
+
     return true;
 }
 
