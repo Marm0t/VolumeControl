@@ -36,3 +36,6 @@ FORMS += \
     about.ui
 
 CONFIG += c++11
+
+QMAKE_LFLAGS_RELEASE += -static -static-libgcc
+QMAKE_CXXFLAGS_RELEASE += -O3
